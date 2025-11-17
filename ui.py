@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-from calculator import calculate
+from calculator import calculate, normalize_model_name
 
 
 class QueueCalculatorUI:
@@ -10,7 +10,7 @@ class QueueCalculatorUI:
 
         # === Inputs ===
         row = 0
-        ttk.Label(self.root, text="Modelo (ex: M/M/1):").grid(row=row, column=0, sticky="w")
+        ttk.Label(self.root, text="Modelo:").grid(row=row, column=0, sticky="w")
         self.model_entry = ttk.Entry(self.root)
         self.model_entry.insert(0, "M/M/1")
         self.model_entry.grid(row=row, column=1)
@@ -26,21 +26,26 @@ class QueueCalculatorUI:
         self.mu_entry.grid(row=row, column=1)
         row += 1
 
-        ttk.Label(self.root, text="n (opcional) - (número de clientes)::").grid(row=row, column=0, sticky="w")
+        ttk.Label(self.root, text="n (opcional) - (número de clientes):").grid(row=row, column=0, sticky="w")
         self.n_entry = ttk.Entry(self.root)
         self.n_entry.grid(row=row, column=1)
         row += 1
 
-        ttk.Label(self.root, text="c (opcional) - (número de servidores):").grid(row=row, column=0, sticky="w")
-        self.c_entry = ttk.Entry(self.root)
-        self.c_entry.grid(row=row, column=1)
+        ttk.Label(self.root, text="s (opcional) - (número de servidores):").grid(row=row, column=0, sticky="w")
+        self.s_entry = ttk.Entry(self.root)
+        self.s_entry.grid(row=row, column=1)
         row += 1
 
         ttk.Label(self.root, text="K (opcional) - (capacidade do sistema):").grid(row=row, column=0, sticky="w")
         self.k_entry = ttk.Entry(self.root)
         self.k_entry.grid(row=row, column=1)
         row += 1
-        
+
+        ttk.Label(self.root, text="N (opcional) - (tamanho da população finita):").grid(row=row, column=0, sticky="w")
+        self.N_entry = ttk.Entry(self.root)
+        self.N_entry.grid(row=row, column=1)
+        row += 1
+
         ttk.Label(self.root, text="t (opcional) - (tempo):").grid(row=row, column=0, sticky="w")
         self.t_entry = ttk.Entry(self.root)
         self.t_entry.grid(row=row, column=1)
@@ -86,13 +91,13 @@ class QueueCalculatorUI:
                 messagebox.showerror("Erro", "n deve ser inteiro.")
                 return
 
-        # Param opcional: c
-        c_raw = self.c_entry.get().strip()
-        if c_raw:
+        # Param opcional: s (número de servidores)
+        s_raw = self.s_entry.get().strip()
+        if s_raw:
             try:
-                params["c"] = int(c_raw)
+                params["s"] = int(s_raw)
             except ValueError:
-                messagebox.showerror("Erro", "c deve ser inteiro.")
+                messagebox.showerror("Erro", "s deve ser inteiro.")
                 return
 
         # Param opcional: K
@@ -103,8 +108,17 @@ class QueueCalculatorUI:
             except ValueError:
                 messagebox.showerror("Erro", "K deve ser inteiro.")
                 return
-            
-           # Param opcional: t
+
+        # Param opcional: N (população finita)
+        N_raw = self.N_entry.get().strip()
+        if N_raw:
+            try:
+                params["N"] = int(N_raw)
+            except ValueError:
+                messagebox.showerror("Erro", "N deve ser inteiro.")
+                return
+
+        # Param opcional: t
         t_raw = self.t_entry.get().strip()
         if t_raw:
             try:
@@ -124,9 +138,11 @@ class QueueCalculatorUI:
     def show_results(self, model_name, results: dict):
         self.result_text.delete("1.0", tk.END)
 
+        model_key = normalize_model_name(model_name)
+
         self.result_text.insert(tk.END, f"=== Resultados ({model_name}) ===\n\n")
 
-        # Mapeamento descritivo
+        # Labels for all possible keys returned by the models
         descriptions = {
             "rho": "Utilização (ρ)",
             "p0": "Probabilidade de 0 clientes (P0)",
@@ -137,32 +153,76 @@ class QueueCalculatorUI:
             "Wq": "Tempo médio na fila (Wq)",
             "P(W>t)": "Prob. de tempo no sistema maior que t (P(W>t))",
             "P(Wq>t)": "Prob. de tempo na fila maior que t (P(Wq>t))",
+            "lambda_eff": "Taxa efetiva de chegada (λ̄)",
+            "pK": "Probabilidade de sistema cheio (P_K)",
+            "L_operational": "Número médio de itens operacionais (N − L)",
+            "P(any_idle_server)": "Prob. de pelo menos 1 servidor ocioso",
         }
 
+        # --- print base results ---
         for key, value in results.items():
             label = descriptions.get(key, key)
 
-            # Conversão de W e Wq para minutos (se existirem)
+            # W and Wq in hours + minutes
             if key in ("W", "Wq"):
                 try:
                     value_min = float(value) * 60
                     value_fmt = f"{value:.4f} h  ({value_min:.2f} min)"
-                except:
+                except Exception:
                     value_fmt = value
-                    
-            # Conversão de probabilidades para porcentagem
-            elif key in ("P(W>t)", "P(Wq>t)", "p0", "pn"):
+
+            # probabilities as %
+            elif key in ("P(W>t)", "P(Wq>t)", "p0", "pn", "pK", "P(any_idle_server)"):
                 try:
                     value_pct = float(value) * 100
                     value_fmt = f"{value:.6f}  ({value_pct:.4f} %)"
-                except:
+                except Exception:
                     value_fmt = value
-                    
+
             else:
                 value_fmt = value
 
             self.result_text.insert(tk.END, f"{label}: {value_fmt}\n")
 
+        # --- extra, model-specific outputs ---
+
+        # 1) Finite capacity models: M/M/1/K and M/M/s/K → clientes perdidos por unidade de tempo
+        if model_key in ("M/M/1/K", "M/M/S/K"):
+            lam_eff = results.get("lambda_eff")
+            pK = results.get("pK")
+            if lam_eff is not None and pK is not None and pK < 1:
+                # λ̄ = λ(1−P_K) → λ = λ̄ / (1−P_K)
+                lam = lam_eff / (1.0 - pK)
+                lost_rate = lam * pK          # chegadas perdidas por unidade de tempo
+                self.result_text.insert(
+                    tk.END,
+                    f"\nChegadas perdidas por unidade de tempo (λ · P_K): {lost_rate:.4f}\n",
+                )
+
+        # 2) Finite population models: M/M/1/N and M/M/s/N → tempo parado, % ocioso etc.
+        if model_key in ("M/M/1/N", "M/M/S/N"):
+            L_oper = results.get("L_operational")
+            W = results.get("W")
+            idle_prob = results.get("P(any_idle_server)")
+            if L_oper is not None:
+                self.result_text.insert(
+                    tk.END,
+                    f"\nNúmero médio de unidades operacionais: {L_oper:.4f}\n",
+                )
+            if W is not None:
+                try:
+                    W_min = float(W) * 60
+                    self.result_text.insert(
+                        tk.END,
+                        f"Tempo médio parado (W – tempo quebrado): {W:.4f} h ({W_min:.2f} min)\n",
+                    )
+                except Exception:
+                    pass
+            if idle_prob is not None:
+                self.result_text.insert(
+                    tk.END,
+                    f"Tempo com pelo menos 1 servidor ocioso: {idle_prob:.6f} ({idle_prob*100:.4f} %)\n",
+                )
 
     def start(self):
         self.root.mainloop()
