@@ -1,9 +1,11 @@
 import models
 
 MODEL_MAP = {
-    "M/M/1": models.mm1,
-    "M/M/c": models.mmc,
+    "M/M/1": models.mm1, #chicao fez
+    "M/M/s": models.mms,
     "M/M/1/K": models.mm1k,
+    "M/M/s/K": models.mmsk, # testado
+    "M/M/1/N": models.mm1n,
     # ...
 }
 
