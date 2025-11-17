@@ -15,6 +15,7 @@ MODEL_MAP: Dict[str, Callable[..., Dict[str, Any]]] = {
     "M/M/1/PNP": models_p.mm1_priority_non_preemptive,
     "M/M/S/PPP": models_p.mms_priority_preemptive,
     "M/M/S/PNP": models_p.mms_priority_non_preemptive,
+    "M/G/1": models_np.mg1,
 }
 
 # Sinonimos e abreviacoes que aparecem nos materiais/inputs
@@ -29,6 +30,7 @@ MODEL_ALIASES: Dict[str, str] = {
     "MM1PNP": "M/M/1/PNP",
     "MMSPPP": "M/M/S/PPP",
     "MMSPNP": "M/M/S/PNP",
+    "MG1": "M/G/1",
 }
 
 
