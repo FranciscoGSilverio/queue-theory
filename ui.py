@@ -10,7 +10,7 @@ class QueueCalculatorUI:
 
         # === Inputs ===
         row = 0
-        ttk.Label(self.root, text="Modelo (ex: M/M/1, M/M/s, M/M/1/K, M/M/s/K, M/M/1/N):").grid(row=row, column=0, sticky="w")
+        ttk.Label(self.root, text="Modelo:").grid(row=row, column=0, sticky="w")
         self.model_entry = ttk.Entry(self.root)
         self.model_entry.insert(0, "M/M/1")
         self.model_entry.grid(row=row, column=1)
