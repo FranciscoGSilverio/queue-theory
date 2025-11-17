@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-from calculator import calculate
+from calculator import calculate, normalize_model_name
 
 
 class QueueCalculatorUI:
@@ -138,7 +138,7 @@ class QueueCalculatorUI:
     def show_results(self, model_name, results: dict):
         self.result_text.delete("1.0", tk.END)
 
-        model_key = model_name.replace(" ", "").upper()
+        model_key = normalize_model_name(model_name)
 
         self.result_text.insert(tk.END, f"=== Resultados ({model_name}) ===\n\n")
 
@@ -187,7 +187,7 @@ class QueueCalculatorUI:
         # --- extra, model-specific outputs ---
 
         # 1) Finite capacity models: M/M/1/K and M/M/s/K → clientes perdidos por unidade de tempo
-        if model_key in ("M/M/1/K", "MM1K", "M/M/S/K", "M/M/S>1/K", "MMSK"):
+        if model_key in ("M/M/1/K", "M/M/S/K"):
             lam_eff = results.get("lambda_eff")
             pK = results.get("pK")
             if lam_eff is not None and pK is not None and pK < 1:
@@ -200,7 +200,7 @@ class QueueCalculatorUI:
                 )
 
         # 2) Finite population models: M/M/1/N and M/M/s/N → tempo parado, % ocioso etc.
-        if model_key in ("M/M/1/N", "MM1N", "M/M/S/N", "MMSN"):
+        if model_key in ("M/M/1/N", "M/M/S/N"):
             L_oper = results.get("L_operational")
             W = results.get("W")
             idle_prob = results.get("P(any_idle_server)")
