@@ -1,6 +1,7 @@
 import models_np
 import models_p
 
+# Mapeamento em torno das funções implementadas em models.py
 MODEL_MAP = {
     "M/M/1": models_np.mm1, #chicao fez
     "M/M/s": models_np.mms,
@@ -16,8 +17,26 @@ MODEL_MAP = {
 }
 
 
-def calculate(model_name, **params):
-    model = MODEL_MAP.get(model_name)
+def normalize_model_name(model_name: str) -> str:
+    """
+    Normaliza variações de escrita (espacos, caixa, '>1') para uma chave
+    canônica que esteja em MODEL_MAP.
+    """
+    if not model_name:
+        return ""
+
+    key = model_name.strip().upper().replace(" ", "")
+    key = key.replace(">1", "")
+
+    if key in MODEL_MAP:
+        return key
+
+    return MODEL_ALIASES.get(key, key)
+
+
+def calculate(model_name: str, **params):
+    key = normalize_model_name(model_name)
+    model = MODEL_MAP.get(key)
     if not model:
         raise ValueError("Modelo não implementado")
 
