@@ -1,21 +1,32 @@
 from typing import Any, Callable, Dict
 
-import models_np
-import models_p
+from models import (
+    mg1,
+    mm1,
+    mm1_priority_non_preemptive,
+    mm1_priority_preemptive,
+    mm1k,
+    mm1n,
+    mms,
+    mms_priority_non_preemptive,
+    mms_priority_preemptive,
+    mmsk,
+    mmsn,
+)
 
 # Funcoes canonicas implementadas em cada modulo
 MODEL_MAP: Dict[str, Callable[..., Dict[str, Any]]] = {
-    "M/M/1": models_np.mm1,
-    "M/M/S": models_np.mms,
-    "M/M/1/K": models_np.mm1k,
-    "M/M/S/K": models_np.mmsk,
-    "M/M/1/N": models_np.mm1n,
-    "M/M/S/N": models_np.mmsn,
-    "M/M/1/PPP": models_p.mm1_priority_preemptive,
-    "M/M/1/PNP": models_p.mm1_priority_non_preemptive,
-    "M/M/S/PPP": models_p.mms_priority_preemptive,
-    "M/M/S/PNP": models_p.mms_priority_non_preemptive,
-    "M/G/1": models_np.mg1,
+    "M/M/1": mm1,
+    "M/M/S": mms,
+    "M/M/1/K": mm1k,
+    "M/M/S/K": mmsk,
+    "M/M/1/N": mm1n,
+    "M/M/S/N": mmsn,
+    "M/M/1/PPP": mm1_priority_preemptive,
+    "M/M/1/PNP": mm1_priority_non_preemptive,
+    "M/M/S/PPP": mms_priority_preemptive,
+    "M/M/S/PNP": mms_priority_non_preemptive,
+    "M/G/1": mg1,
 }
 
 # Sinonimos e abreviacoes que aparecem nos materiais/inputs
