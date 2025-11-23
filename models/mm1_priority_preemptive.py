@@ -1,6 +1,6 @@
 from typing import Any, Dict, Iterable, List
 
-from .priority_common import aggregate_totals, prefix_sums, validate_common_inputs
+from .priority_common import prefix_sums, validate_common_inputs
 
 
 def mm1_priority_preemptive(
@@ -39,26 +39,58 @@ def mm1_priority_preemptive(
         }
 
     class_metrics: List[Dict[str, float]] = []
+    total_L = 0.0
+    total_Lq = 0.0
     for idx, lam in enumerate(rates):
         cum_lambda = prefix[idx]
-        if cum_lambda == 0:
-            Wq = 0.0
-        else:
-            Wq = cum_lambda / (mu * (mu - cum_lambda))
-
-        W = Wq + 1.0 / mu
-        Lq = lam * Wq
-        L = lam * W
+        prev_lambda = prefix[idx - 1] if idx > 0 else 0.0
+        denom_prev = mu - prev_lambda
+        denom_cum = mu - cum_lambda
+        if denom_prev <= 0 or denom_cum <= 0:
+            raise ValueError(
+                f"A subfila ate a classe {idx + 1} ficou instavel: lambda={cum_lambda:.6f} >= mu."
+            )
+        # Formula do gabarito: Wk = (1/mu)/[(1 - sum_prev/mu)*(1 - sum_cum/mu)] = mu / [(mu - prev)(mu - cum)]
+        W = mu / (denom_prev * denom_cum)
+        Wq = max(W - 1.0 / mu, 0.0)
+        L_class = lam * W
+        Lq_class = lam * Wq
+        total_L += L_class
+        total_Lq += Lq_class
+        L_cum = cum_lambda * W
+        Lq_cum = L_cum - (cum_lambda / mu)
         class_metrics.append(
             {
                 "priority": idx + 1,
                 "lambda": lam,
+                "lambda_cum": cum_lambda,
                 "rho": lam / mu,
                 "W": W,
                 "Wq": Wq,
-                "L": L,
-                "Lq": Lq,
+                # L e Lq exibem os valores do gabarito (cumulativos ate a classe k)
+                "L": L_cum,
+                "Lq": Lq_cum,
+                # Metricas apenas da classe (nao exibidas no gabarito)
+                "L_class": L_class,
+                "Lq_class": Lq_class,
             }
         )
 
-    return aggregate_totals(class_metrics, mu=mu, s=1)
+    rho_total = total_lambda / mu
+    if rho_total >= 1:
+        raise ValueError("Sistema instavel: lambda_total >= mu.")
+    p0 = 1.0 - rho_total
+    W_total = total_L / total_lambda if total_lambda > 0 else 0.0
+    Wq_total = total_Lq / total_lambda if total_lambda > 0 else 0.0
+
+    return {
+        "rho": rho_total,
+        "p0": p0,
+        "L": total_L,
+        "Lq": total_Lq,
+        "W": W_total,
+        "Wq": Wq_total,
+        "per_class": class_metrics,
+        "lambda_total": total_lambda,
+        "service_in_progress": total_lambda / mu,
+    }

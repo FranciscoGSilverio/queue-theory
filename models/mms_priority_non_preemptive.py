@@ -1,12 +1,8 @@
 from typing import Any, Dict, Iterable, List
 
 from .mms_priority_preemptive import mms_priority_preemptive
-from .priority_common import (
-    aggregate_totals,
-    erlang_c,
-    prefix_sums,
-    validate_common_inputs,
-)
+from .priority_common import aggregate_totals, erlang_c, prefix_sums, validate_common_inputs
+from .mm1_priority_non_preemptive import mm1_priority_non_preemptive
 
 
 def mms_priority_non_preemptive(
@@ -17,6 +13,10 @@ def mms_priority_non_preemptive(
     """
     Modelo M/M/s com prioridades nao preemptivas.
     """
+    if s == 1:
+        # Caso especial com um unico servidor: usar o modelo dedicado S=1.
+        return mm1_priority_non_preemptive(arrival_rates, mu)
+
     rates = validate_common_inputs(arrival_rates, mu, s=s)
     prefix = prefix_sums(rates)
     total_lambda = prefix[-1]

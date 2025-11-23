@@ -143,6 +143,48 @@ MODEL_CONFIG: Dict[str, Dict[str, Any]] = {
             InputField("s", "Numero de servidores (s)", field_type="int", placeholder="ex: 3"),
         ],
     },
+    "PRIORIDADE_PREEMPTIVA_3X3": {
+        "description": "Modelo com prioridades com interrupcao (preemptivo), minimo 3 classes e ate 3 canais.",
+        "fields": [
+            InputField(
+                "arrival_rates",
+                "Taxas de chegada por prioridade (minimo 3)",
+                field_type="list_float",
+                placeholder="ex: 0.2, 0.6, 1.2",
+                help_text="Informe ao menos tres taxas (classe 1 = maior prioridade).",
+            ),
+            InputField("mu", "Taxa de servico (mu)", placeholder="ex: 3"),
+            InputField(
+                "s",
+                "Numero de servidores (1 a 3)",
+                field_type="int",
+                default=3,
+                placeholder="ex: 3",
+                help_text="Use entre 1 e 3 canais (exemplo da aula usa 3).",
+            ),
+        ],
+    },
+    "PRIORIDADE_NAO_PREEMPTIVA_3X3": {
+        "description": "Modelo com prioridades sem interrupcao (nao preemptivo), minimo 3 classes e ate 3 canais.",
+        "fields": [
+            InputField(
+                "arrival_rates",
+                "Taxas de chegada por prioridade (minimo 3)",
+                field_type="list_float",
+                placeholder="ex: 0.2, 0.6, 1.2",
+                help_text="Informe ao menos tres taxas (classe 1 = maior prioridade).",
+            ),
+            InputField("mu", "Taxa de servico (mu)", placeholder="ex: 3"),
+            InputField(
+                "s",
+                "Numero de servidores (1 a 3)",
+                field_type="int",
+                default=3,
+                placeholder="ex: 3",
+                help_text="Use entre 1 e 3 canais (exemplo da aula usa 3).",
+            ),
+        ],
+    },
     "M/G/1": {
         "description": "Fila M/G/1 (atendimento geral) com diferentes distribuicoes de servico.",
         "fields": [

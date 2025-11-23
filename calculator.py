@@ -12,6 +12,8 @@ from models import (
     mms_priority_preemptive,
     mmsk,
     mmsn,
+    priority_with_preemption,
+    priority_without_preemption,
 )
 
 # Funcoes canonicas implementadas em cada modulo
@@ -26,6 +28,8 @@ MODEL_MAP: Dict[str, Callable[..., Dict[str, Any]]] = {
     "M/M/1/PNP": mm1_priority_non_preemptive,
     "M/M/S/PPP": mms_priority_preemptive,
     "M/M/S/PNP": mms_priority_non_preemptive,
+    "PRIORIDADE_PREEMPTIVA_3X3": priority_with_preemption,
+    "PRIORIDADE_NAO_PREEMPTIVA_3X3": priority_without_preemption,
     "M/G/1": mg1,
 }
 
@@ -42,6 +46,11 @@ MODEL_ALIASES: Dict[str, str] = {
     "MMSPPP": "M/M/S/PPP",
     "MMSPNP": "M/M/S/PNP",
     "MG1": "M/G/1",
+    "PRIORIDADECOMINTERRUPCAO": "PRIORIDADE_PREEMPTIVA_3X3",
+    "PRIORIDADESEMINTERROMPER": "PRIORIDADE_NAO_PREEMPTIVA_3X3",
+    "PRIORIDADESEMINTERRUPCAO": "PRIORIDADE_NAO_PREEMPTIVA_3X3",
+    "PRIORIDADECOMINT": "PRIORIDADE_PREEMPTIVA_3X3",
+    "PRIORIDADESEMSUSPENSAO": "PRIORIDADE_NAO_PREEMPTIVA_3X3",
 }
 
 

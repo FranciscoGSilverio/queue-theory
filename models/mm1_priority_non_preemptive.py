@@ -22,12 +22,14 @@ def mm1_priority_non_preemptive(
     for idx, lam in enumerate(rates):
         cum_lambda = prefix[idx]
         higher_lambda = prefix[idx - 1] if idx > 0 else 0.0
-        denom = mu - cum_lambda
-        if denom <= 0:
+        denom_cum = mu - cum_lambda
+        denom_prev = mu - higher_lambda
+        if denom_cum <= 0 or denom_prev <= 0:
             raise ValueError(
                 f"A subfila ate a classe {idx + 1} ficou instavel: lambda={cum_lambda:.6f} >= mu."
             )
-        Wq = (total_lambda + higher_lambda) / (mu * denom)
+        # Formula ajustada ao gabarito: Wq_k = lambda_total / [(mu - lambda_{1..k-1})(mu - lambda_{1..k})]
+        Wq = total_lambda / (denom_prev * denom_cum)
         W = Wq + 1.0 / mu
         Lq = lam * Wq
         L = lam * W

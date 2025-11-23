@@ -140,3 +140,15 @@ def test_priority_non_preemptive():
     assert per_class[0]["Wq"] == pytest.approx(0.2, abs=1e-4)
     # Class 2 (index 1)
     assert per_class[1]["Wq"] == pytest.approx(0.5, abs=1e-4)
+
+
+def test_priority_minimums_enforced():
+    with pytest.raises(ValueError, match="pelo menos 3"):
+        calculate("PRIORIDADE_PREEMPTIVA_3X3", arrival_rates=[0.2, 0.6], mu=3, s=3)
+
+    with pytest.raises(ValueError, match="<= 3"):
+        calculate("PRIORIDADE_PREEMPTIVA_3X3", arrival_rates=[0.2, 0.6, 1.2], mu=3, s=4)
+
+    result = calculate("PRIORIDADE_NAO_PREEMPTIVA_3X3", arrival_rates=[0.2, 0.6, 1.2], mu=3, s=3)
+    assert len(result["per_class"]) == 3
+    assert result["rho"] < 1
