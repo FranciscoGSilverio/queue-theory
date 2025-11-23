@@ -1,7 +1,9 @@
 from typing import Any, Dict, Iterable, List
 
+from math import factorial
+
 from .mms_priority_preemptive import mms_priority_preemptive
-from .priority_common import aggregate_totals, erlang_c, prefix_sums, validate_common_inputs
+from .priority_common import aggregate_totals, prefix_sums, validate_common_inputs
 from .mm1_priority_non_preemptive import mm1_priority_non_preemptive
 
 
@@ -24,22 +26,31 @@ def mms_priority_non_preemptive(
     if total_lambda == 0:
         return mms_priority_preemptive(arrival_rates, mu, s)
 
+    # Formula do gabarito para s > 1 (sem interrupcao).
+    r = total_lambda / mu
+    sum_terms = sum((r**j) / factorial(j) for j in range(s))
+    if r == 0:
+        base_factor = s * mu
+    else:
+        base_factor = (factorial(s) * (s * mu - total_lambda) / (r**s)) * sum_terms + (s * mu)
+
     class_metrics: List[Dict[str, float]] = []
     for idx, lam in enumerate(rates):
+        prev_lambda = prefix[idx - 1] if idx > 0 else 0.0
         cum_lambda = prefix[idx]
-        erlang_c_value = erlang_c(cum_lambda, mu, s)
-        denom = (s * mu) - cum_lambda
-        if denom <= 0:
+
+        factor_prev = 1.0 - (prev_lambda / (s * mu))
+        factor_cum = 1.0 - (cum_lambda / (s * mu))
+        if factor_prev <= 0 or factor_cum <= 0:
             raise ValueError(
                 f"A subfila ate a classe {idx + 1} ficou instavel: lambda={cum_lambda:.6f} >= s*mu."
             )
 
-        Wq_preemptive = erlang_c_value / denom
-        residual_delay = (total_lambda - lam) / (s * mu * denom) if total_lambda > 0 else 0.0
-        Wq = Wq_preemptive + residual_delay
-        W = Wq + 1.0 / mu
-        Lq = lam * Wq
+        W = (1.0 / (base_factor * factor_prev * factor_cum)) + (1.0 / mu)
+        Wq = max(W - 1.0 / mu, 0.0)
         L = lam * W
+        Lq = max(L - (lam / mu), 0.0)
+
         class_metrics.append(
             {
                 "priority": idx + 1,
@@ -49,7 +60,7 @@ def mms_priority_non_preemptive(
                 "Wq": Wq,
                 "L": L,
                 "Lq": Lq,
-                "P(wait)": erlang_c_value,
+                "base_factor": base_factor,
             }
         )
 

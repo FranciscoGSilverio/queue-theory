@@ -5,18 +5,18 @@ from .mms_priority_non_preemptive import mms_priority_non_preemptive
 from .mms_priority_preemptive import mms_priority_preemptive
 
 
-MIN_PRIORITY_CLASSES = 3
+MIN_PRIORITY_CLASSES = 1
 MAX_SERVERS = 3
 
 
 def _enforce_minimums(arrival_rates: Iterable[float], s: int) -> List[float]:
     """
-    Garante que o modelo seja usado com pelo menos 3 classes de prioridade e no maximo 3 servidores.
+    Garante que o modelo seja usado com pelo menos 1 classe de prioridade e no maximo 3 servidores.
     Retorna as taxas convertidas para float para reaproveitar nas funcoes base.
     """
     rates = coerce_arrival_rates(arrival_rates)
     if len(rates) < MIN_PRIORITY_CLASSES:
-        raise ValueError(f"Informe pelo menos {MIN_PRIORITY_CLASSES} classes de prioridade.")
+        raise ValueError(f"Informe pelo menos {MIN_PRIORITY_CLASSES} classe de prioridade.")
     if not isinstance(s, int) or s < 1:
         raise ValueError("Numero de servidores (s) deve ser um inteiro >= 1.")
     if s > MAX_SERVERS:
