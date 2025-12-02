@@ -73,3 +73,9 @@ def mg1(
         "Var(S)": variance,
         "cs2": cs2,
     }
+
+# para M/G/1, E[S] = 1/mu, E[S^2] = 1/mu^2 (serviço determinístico)
+# Lq = (lambda^2 * E[S^2]) / (2 * (1 - rho)) = (lambda^2 / mu^2) / (2 * (1 - rho))
+# Wq = Lq / lambda = (lambda * E[S^2]) / (2 * (1 - rho)) = (lambda / mu^2) / (2 * (1 - rho))
+# W = Wq + E[S] = Wq + 1/mu
+# L = lambda * W = lambda * (Wq + 1/mu) = Lq + rho
