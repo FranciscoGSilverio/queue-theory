@@ -57,6 +57,12 @@ def show_home_content():
     | **N** | Tamanho da População | Inteiro (se omitido = $\infty$) |
     | **D** | Disciplina da Fila | FIFO, LIFO, SIRO, PRI (se omitido = FIFO) |
     """)
+    
+    st.markdown(
+        """
+        Custo total = Custo de operação (reais/hora) * L (número médio no sistema) + Custo de atendimento (reais por hora) * S (número de servidores)
+        """
+    )
 
 
 def show_basic_models_content():
