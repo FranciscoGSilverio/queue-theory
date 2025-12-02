@@ -1,6 +1,8 @@
 from math import exp
 from typing import Any, Dict
 
+from .pn_utils import build_pn_distribution
+
 
 def mm1(
     lmbda: float,
@@ -48,6 +50,7 @@ def mm1(
 
     if n is not None:
         result["pn"] = pn(n)
+        result["pn_distribution"] = build_pn_distribution(n, pn)
 
     if t is not None:
         if t < 0:

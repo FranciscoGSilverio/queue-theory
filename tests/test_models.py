@@ -28,6 +28,20 @@ def test_mm1_unstable():
     with pytest.raises(ValueError, match="Sistema instavel"):
         calculate("M/M/1", lmbda=20, mu=15)
 
+
+def test_mm1_pn_distribution():
+    result = calculate("M/M/1", lmbda=1, mu=2, n=3)
+
+    assert result["pn"] == pytest.approx(0.0625, abs=1e-4)
+
+    pn_dist = result["pn_distribution"]
+    assert pn_dist["0"] == pytest.approx(0.5, abs=1e-4)
+    assert pn_dist["1"] == pytest.approx(0.25, abs=1e-4)
+    assert pn_dist["2"] == pytest.approx(0.125, abs=1e-4)
+    assert pn_dist["3"] == pytest.approx(0.0625, abs=1e-4)
+    assert pn_dist[">3"] == pytest.approx(0.0625, abs=1e-4)
+
+
 def test_mms_stable():
     """
     Exercise:
@@ -78,6 +92,27 @@ def test_mm1k_finite_capacity():
     assert result["lambda_eff"] == pytest.approx(6/7, abs=1e-4)
     assert result["W"] == pytest.approx(2/3, abs=1e-4)
 
+
+def test_mm1k_pn_distribution_tail_zero():
+    result = calculate("M/M/1/K", lmbda=1, mu=2, K=2, n=2)
+    assert result["pn_distribution"][">2"] == pytest.approx(0.0, abs=1e-6)
+
+
+def test_mmsk_finite_capacity():
+    """
+    Lambda = 1, Mu = 2, s = 2, K = 3
+    """
+    result = calculate("M/M/S/K", lmbda=1, mu=2, s=2, K=3)
+
+    assert result["p0"] == pytest.approx(0.6037736, abs=1e-6)
+    assert result["pK"] == pytest.approx(0.018868, abs=1e-5)
+    assert result["L"] == pytest.approx(0.509434, abs=1e-6)
+    assert result["Lq"] == pytest.approx(0.018868, abs=1e-5)
+    assert result["lambda_eff"] == pytest.approx(0.981132, abs=1e-6)
+    assert result["W"] == pytest.approx(0.519, abs=1e-3)
+    assert result["Wq"] == pytest.approx(0.0192, abs=1e-4)
+
+
 def test_mm1n_finite_population():
     """
     Exercise:
@@ -86,17 +121,17 @@ def test_mm1n_finite_population():
     N = 2
     
     Expected:
-    P0 = 4/9 (~0.4444)
-    L = 2/3 (~0.6667)
-    lambda_eff = 4/3 (~1.3333)
-    W = 0.5
+    P0 = 0.4
+    L = 0.8
+    lambda_eff = 1.2
+    W = 2/3
     """
     result = calculate("M/M/1/N", lmbda=1, mu=2, N=2)
     
-    assert result["p0"] == pytest.approx(4/9, abs=1e-4)
-    assert result["L"] == pytest.approx(2/3, abs=1e-4)
-    assert result["lambda_eff"] == pytest.approx(4/3, abs=1e-4)
-    assert result["W"] == pytest.approx(0.5, abs=1e-4)
+    assert result["p0"] == pytest.approx(0.4, abs=1e-4)
+    assert result["L"] == pytest.approx(0.8, abs=1e-4)
+    assert result["lambda_eff"] == pytest.approx(1.2, abs=1e-4)
+    assert result["W"] == pytest.approx(2/3, abs=1e-4)
 
 def test_mg1_deterministic():
     """

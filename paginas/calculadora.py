@@ -207,6 +207,7 @@ METRIC_LABELS: Dict[str, str] = {
     "rho": "Utilizacao (rho)",
     "p0": "Probabilidade de sistema vazio (P0)",
     "pn": "Probabilidade de n clientes (Pn)",
+    "pn_distribution": "Probabilidades ate n (e >n)",
     "pK": "Probabilidade de capacidade cheia (PK)",
     "L": "Numero medio no sistema (L)",
     "Lq": "Numero medio na fila (Lq)",
@@ -365,6 +366,14 @@ def display_results(model_key: str, result: Dict[str, Any]) -> None:
     if "per_class" in nested_items:
         st.subheader("Metricas por prioridade")
         st.dataframe(nested_items.pop("per_class"), use_container_width=True)
+
+    if "pn_distribution" in nested_items:
+        pn_dist = nested_items.pop("pn_distribution")
+        dist_rows = [
+            {"n": state, "Pn": format_result_value("pn", prob)} for state, prob in pn_dist.items()
+        ]
+        st.subheader(METRIC_LABELS.get("pn_distribution", "Distribuicao Pn"))
+        st.table(dist_rows)
 
     for key, value in nested_items.items():
         st.subheader(METRIC_LABELS.get(key, key))

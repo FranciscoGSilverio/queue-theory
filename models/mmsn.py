@@ -1,5 +1,7 @@
 from typing import Any, Dict, List
 
+from .pn_utils import build_pn_distribution
+
 
 def mmsn(
     lmbda: float,
@@ -12,6 +14,11 @@ def mmsn(
 ) -> Dict[str, Any]:
     """
     Modelo M/M/s/N (populacao finita com s servidores).
+
+    - Processo nascimento-morte com lambda_n = (N - n) * lambda e mu_n = min(n, s) * mu.
+    - A_n = A_{n-1} * (lambda_{n-1}/mu_n) com A_0 = 1; P0 = 1/sum(A_n), Pn = A_n * P0.
+    - L = sum n*Pn; Lq = L - E[servidores ocupados]; lambda_eff = lambda * (N - L);
+      W = L/lambda_eff, Wq = Lq/lambda_eff.
     """
     if lmbda < 0:
         raise ValueError("lambda (lmbda) deve ser >= 0")
@@ -23,6 +30,11 @@ def mmsn(
         raise ValueError("N deve ser inteiro >= 0")
 
     if N == 0:
+        def pn_zero(n_val: int) -> float:
+            if n_val < 0 or int(n_val) != n_val or n_val > N:
+                raise ValueError(f"n deve ser inteiro entre 0 e {N}")
+            return 1.0 if n_val == 0 else 0.0
+
         result: Dict[str, Any] = {
             "rho": 0.0,
             "p0": 1.0,
@@ -35,7 +47,8 @@ def mmsn(
             "P(any_idle_server)": 1.0,
         }
         if n is not None:
-            result["pn"] = 1.0 if n == 0 else 0.0
+            result["pn"] = pn_zero(n)
+            result["pn_distribution"] = build_pn_distribution(n, pn_zero, max_state=N)
         return result
 
     lambdas: List[float] = [(N - k) * lmbda for k in range(N + 1)]
@@ -86,6 +99,7 @@ def mmsn(
     if n is not None:
         if 0 <= n <= N:
             result["pn"] = p[n]
+            result["pn_distribution"] = build_pn_distribution(n, lambda idx: p[idx], max_state=N)
         else:
             raise ValueError(f"n deve estar entre 0 e {N}")
 

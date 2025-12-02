@@ -1,6 +1,8 @@
 from math import factorial
 from typing import Any, Dict
 
+from .pn_utils import build_pn_distribution
+
 
 def mmsk(
     lmbda: float,
@@ -14,6 +16,10 @@ def mmsk(
     """
     Modelo M/M/s/K com capacidade total K.
 
+    - Pn = (a^n / n!) P0 para n < s; Pn = (a^n / (s! * s^{n-s})) P0 para s <= n <= K, com a = lambda/mu.
+    - P0 = 1 / [ sum_{n=0}^{s-1} a^n/n! + sum_{n=s}^{K} a^n/(s! s^{n-s}) ].
+    - lambda_eff = lambda * (1 - P_K); L = sum n*Pn; ocupacao = sum min(n,s)*Pn; Lq = L - ocupacao;
+      W = L/lambda_eff; Wq = Lq/lambda_eff.
     Parametros opcionais:
       - n: calcula Pn
       - t: aceito, mas nao utilizado
@@ -30,6 +36,13 @@ def mmsk(
         raise ValueError("K deve ser >= s")
 
     if lmbda == 0:
+        def pn_func_zero(n_val: int) -> float:
+            if n_val < 0 or int(n_val) != n_val:
+                raise ValueError(f"n deve ser inteiro entre 0 e {K}")
+            if n_val > K:
+                return 0.0
+            return 1.0 if n_val == 0 else 0.0
+
         result: Dict[str, Any] = {
             "rho": 0.0,
             "p0": 1.0,
@@ -40,46 +53,42 @@ def mmsk(
             "lambda_eff": 0.0,
         }
         if n is not None:
-            result["pn"] = 1.0 if n == 0 else 0.0
+            result["pn"] = pn_func_zero(n)
+            result["pn_distribution"] = build_pn_distribution(n, pn_func_zero, max_state=K)
         return result
 
     rho = lmbda / (s * mu)
     a = lmbda / mu
 
-    sum1 = sum(a**n_state / factorial(n_state) for n_state in range(s + 1))
-    sum2 = sum(
+    sum_first = sum(a**n_state / factorial(n_state) for n_state in range(s))
+    sum_tail = sum(
         (a**n_state) / (factorial(s) * (s ** (n_state - s)))
-        for n_state in range(s + 1, K + 1)
+        for n_state in range(s, K + 1)
     )
-    p0 = 1.0 / (sum1 + sum2)
+    p0 = 1.0 / (sum_first + sum_tail)
 
     def pn_func(n_val: int) -> float:
-        if n_val < 0 or int(n_val) != n_val or n_val > K:
+        if n_val < 0 or int(n_val) != n_val:
             raise ValueError(f"n deve ser inteiro entre 0 e {K}")
+        if n_val > K:
+            return 0.0
         if n_val <= s:
             return (a**n_val / factorial(n_val)) * p0
         return (a**n_val / (factorial(s) * (s ** (n_val - s)))) * p0
 
-    if abs(1 - rho) < 1e-10:
-        raise ValueError("Caso rho  1 nao suportado para Lq em M/M/s/K.")
+    pn_values = [pn_func(nv) for nv in range(K + 1)]
 
-    factor = p0 * (a**s) * rho / (factorial(s) * (1 - rho) ** 2)
-    tail = 1 - rho ** (K - s) - (K - s) * (1 - rho) * rho ** (K - s)
-    Lq = factor * tail
-
-    sum_pn = [pn_func(nv) for nv in range(s)]
-    L_partial = sum(nv * pn_func(nv) for nv in range(s))
-    prob_busy = 1 - sum(sum_pn)
-    L = L_partial + Lq + s * prob_busy
-
-    pK = pn_func(K)
+    pK = pn_values[K]
     lambda_eff = lmbda * (1 - pK)
 
-    if lambda_eff > 0:
-        W = L / lambda_eff
-        Wq = Lq / lambda_eff
-    else:
-        W = Wq = 0.0
+    L = sum(nv * pn_values[nv] for nv in range(K + 1))
+    busy_servers = sum(min(nv, s) * pn_values[nv] for nv in range(K + 1))
+    Lq = L - busy_servers
+    if Lq < 0:
+        Lq = 0.0  # protecao numerica
+
+    W = L / lambda_eff if lambda_eff > 0 else 0.0
+    Wq = Lq / lambda_eff if lambda_eff > 0 else 0.0
 
     result: Dict[str, Any] = {
         "rho": rho,
@@ -94,5 +103,6 @@ def mmsk(
 
     if n is not None:
         result["pn"] = pn_func(n)
+        result["pn_distribution"] = build_pn_distribution(n, pn_func, max_state=K)
 
     return result

@@ -1,6 +1,8 @@
 from math import exp, factorial
 from typing import Any, Dict
 
+from .pn_utils import build_pn_distribution
+
 
 def mms(
     lmbda: float,
@@ -34,7 +36,13 @@ def mms(
             "Wq": 0.0,
         }
         if n is not None:
-            result["pn"] = 1.0 if n == 0 else 0.0
+            def zero_pn(n_val: int) -> float:
+                if n_val < 0 or int(n_val) != n_val:
+                    raise ValueError("n deve ser inteiro >= 0")
+                return 1.0 if n_val == 0 else 0.0
+
+            result["pn"] = zero_pn(n)
+            result["pn_distribution"] = build_pn_distribution(n, zero_pn)
         if t is not None:
             result["P(W>t)"] = 0.0
             result["P(Wq>t)"] = 0.0
@@ -72,6 +80,7 @@ def mms(
 
     if n is not None:
         result["pn"] = pn_func(n)
+        result["pn_distribution"] = build_pn_distribution(n, pn_func)
 
     if t is not None:
         if t < 0:
