@@ -89,69 +89,15 @@ MODEL_CONFIG: Dict[str, Dict[str, Any]] = {
             InputField("n", "n (probabilidade Pn)", field_type="int", required=False, placeholder="opcional"),
         ],
     },
-    "M/M/1/PPP": {
-        "description": "Fila M/M/1 com prioridades preemptivas.",
-        "fields": [
-            InputField(
-                "arrival_rates",
-                "Taxas de chegada por prioridade",
-                field_type="list_float",
-                placeholder="ex: 2, 1.5, 0.3",
-                help_text="Informe uma taxa por prioridade (1 = maior prioridade).",
-            ),
-            InputField("mu", "Taxa de servico (mu)", placeholder="ex: 12"),
-        ],
-    },
-    "M/M/1/PNP": {
-        "description": "Fila M/M/1 com prioridades nao preemptivas.",
-        "fields": [
-            InputField(
-                "arrival_rates",
-                "Taxas de chegada por prioridade",
-                field_type="list_float",
-                placeholder="ex: 3, 2, 0.5",
-                help_text="Informe uma taxa por prioridade (1 = maior prioridade).",
-            ),
-            InputField("mu", "Taxa de servico (mu)", placeholder="ex: 10"),
-        ],
-    },
-    "M/M/S/PPP": {
-        "description": "Fila M/M/s com prioridades preemptivas.",
-        "fields": [
-            InputField(
-                "arrival_rates",
-                "Taxas de chegada por prioridade",
-                field_type="list_float",
-                placeholder="ex: 4, 3, 1",
-                help_text="Separe as taxas com virgula ou nova linha.",
-            ),
-            InputField("mu", "Taxa de servico (mu)", placeholder="ex: 14"),
-            InputField("s", "Numero de servidores (s)", field_type="int", placeholder="ex: 3"),
-        ],
-    },
-    "M/M/S/PNP": {
-        "description": "Fila M/M/s com prioridades nao preemptivas.",
-        "fields": [
-            InputField(
-                "arrival_rates",
-                "Taxas de chegada por prioridade",
-                field_type="list_float",
-                placeholder="ex: 4, 3, 1",
-                help_text="Separe as taxas com virgula ou nova linha.",
-            ),
-            InputField("mu", "Taxa de servico (mu)", placeholder="ex: 14"),
-            InputField("s", "Numero de servidores (s)", field_type="int", placeholder="ex: 3"),
-        ],
-    },
     "PRIORIDADE_PREEMPTIVA_3X3": {
-        "description": "Modelo com prioridades com interrupcao (preemptivo), minimo 3 classes e ate 3 canais.",
+        "description": "Modelo com prioridades com interrupcao (preemptivo), 1 a 3 classes e ate 3 canais.",
         "fields": [
             InputField(
                 "arrival_rates",
-                "Taxas de chegada por prioridade (minimo 3)",
+                "Taxas de chegada por prioridade (1 a 3 classes)",
                 field_type="list_float",
                 placeholder="ex: 0.2, 0.6, 1.2",
-                help_text="Informe ao menos tres taxas (classe 1 = maior prioridade).",
+                help_text="Informe entre uma e tres taxas (classe 1 = maior prioridade).",
             ),
             InputField("mu", "Taxa de servico (mu)", placeholder="ex: 3"),
             InputField(
@@ -165,14 +111,14 @@ MODEL_CONFIG: Dict[str, Dict[str, Any]] = {
         ],
     },
     "PRIORIDADE_NAO_PREEMPTIVA_3X3": {
-        "description": "Modelo com prioridades sem interrupcao (nao preemptivo), minimo 3 classes e ate 3 canais.",
+        "description": "Modelo com prioridades sem interrupcao (nao preemptivo), 1 a 3 classes e ate 3 canais.",
         "fields": [
             InputField(
                 "arrival_rates",
-                "Taxas de chegada por prioridade (minimo 3)",
+                "Taxas de chegada por prioridade (1 a 3 classes)",
                 field_type="list_float",
                 placeholder="ex: 0.2, 0.6, 1.2",
-                help_text="Informe ao menos tres taxas (classe 1 = maior prioridade).",
+                help_text="Informe entre uma e tres taxas (classe 1 = maior prioridade).",
             ),
             InputField("mu", "Taxa de servico (mu)", placeholder="ex: 3"),
             InputField(

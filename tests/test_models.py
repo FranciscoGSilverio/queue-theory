@@ -166,8 +166,8 @@ def test_priority_non_preemptive():
     Wq1 = 0.2
     Wq2 = 0.5
     """
-    # Note: The calculator expects 'arrival_rates' as a list
-    result = calculate("M/M/1/PNP", arrival_rates=[2, 1], mu=5)
+    # Agora usamos o modelo consolidado de prioridades sem interrupcao
+    result = calculate("PRIORIDADE_NAO_PREEMPTIVA_3X3", arrival_rates=[2, 1], mu=5, s=1)
     
     # Check per-class metrics
     per_class = result["per_class"]
@@ -177,13 +177,56 @@ def test_priority_non_preemptive():
     assert per_class[1]["Wq"] == pytest.approx(0.5, abs=1e-4)
 
 
-def test_priority_minimums_enforced():
-    with pytest.raises(ValueError, match="pelo menos 3"):
-        calculate("PRIORIDADE_PREEMPTIVA_3X3", arrival_rates=[0.2, 0.6], mu=3, s=3)
-
+def test_priority_limits_and_single_class():
     with pytest.raises(ValueError, match="<= 3"):
         calculate("PRIORIDADE_PREEMPTIVA_3X3", arrival_rates=[0.2, 0.6, 1.2], mu=3, s=4)
+
+    single = calculate("PRIORIDADE_PREEMPTIVA_3X3", arrival_rates=[0.5], mu=3, s=2)
+    assert len(single["per_class"]) == 1
+    assert single["rho"] < 1
 
     result = calculate("PRIORIDADE_NAO_PREEMPTIVA_3X3", arrival_rates=[0.2, 0.6, 1.2], mu=3, s=3)
     assert len(result["per_class"]) == 3
     assert result["rho"] < 1
+
+
+def test_priority_preemptive_s2_matches_slide_example():
+    # Slide: s=2, mu=3, lambda1=0.2, lambda2=0.6
+    result = calculate("PRIORIDADE_PREEMPTIVA_3X3", arrival_rates=[0.2, 0.6], mu=3, s=2)
+    c1, c2 = result["per_class"]
+    assert c1["W"] == pytest.approx(0.33370, abs=5e-4)
+    assert c1["Wq"] == pytest.approx(0.000367, abs=5e-4)
+    assert c2["W"] == pytest.approx(0.34126, abs=8e-4)
+    assert c2["Wq"] == pytest.approx(0.00793, abs=2e-3)
+    assert c2["L"] == pytest.approx(0.27300, abs=2e-3)
+    assert c2["Lq"] == pytest.approx(0.00634, abs=3e-3)
+
+
+def test_priority_preemptive_s2_three_classes():
+    # Slide: s=2, mu=3, lambdas = 0.2, 0.6, 1.2
+    result = calculate("PRIORIDADE_PREEMPTIVA_3X3", arrival_rates=[0.2, 0.6, 1.2], mu=3, s=2)
+    c3 = result["per_class"][2]
+    assert c3["W"] == pytest.approx(0.39875, abs=2e-3)
+    assert c3["Wq"] == pytest.approx(0.06542, abs=3e-3)
+    assert c3["L"] == pytest.approx(0.79751, abs=4e-3)
+    assert c3["Lq"] == pytest.approx(0.13084, abs=5e-3)
+
+
+def test_priority_non_preemptive_s2_matches_slide_example():
+    # Slide: s=2, mu=3, lambdas = 0.2, 0.6, 1.2
+    result = calculate("PRIORIDADE_NAO_PREEMPTIVA_3X3", arrival_rates=[0.2, 0.6, 1.2], mu=3, s=2)
+    c1, c2, c3 = result["per_class"]
+    assert c1["W"] == pytest.approx(0.36207, abs=1e-3)
+    assert c1["Wq"] == pytest.approx(0.02874, abs=1e-3)
+    assert c1["L"] == pytest.approx(0.07241, abs=2e-3)
+    assert c1["Lq"] == pytest.approx(0.00574, abs=2e-3)
+
+    assert c2["W"] == pytest.approx(0.36649, abs=1e-3)
+    assert c2["Wq"] == pytest.approx(0.03316, abs=1e-3)
+    assert c2["L"] == pytest.approx(0.21989, abs=3e-3)
+    assert c2["Lq"] == pytest.approx(0.01989, abs=3e-3)
+
+    assert c3["W"] == pytest.approx(0.38141, abs=2e-3)
+    assert c3["Wq"] == pytest.approx(0.04808, abs=2e-3)
+    assert c3["L"] == pytest.approx(0.45769, abs=4e-3)
+    assert c3["Lq"] == pytest.approx(0.05769, abs=4e-3)
